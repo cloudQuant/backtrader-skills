@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "jsonschema>=4", "build>=1"]
-dev = ["pytest>=7", "jsonschema>=4", "build>=1", "ruff>=0.4", "black>=24", "mypy>=1.10"]
+test = ["pytest>=7", "jsonschema>=4", "build>=1", "wheel>=0.40"]
+dev = ["pytest>=7", "jsonschema>=4", "build>=1", "wheel>=0.40", "ruff>=0.4", "black>=24", "mypy>=1.10"]
 
 [project.scripts]
 backtrader-skills = "backtrader_skills.cli:main"
