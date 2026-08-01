@@ -88,6 +88,11 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+# Pin the rule set explicitly so behavior is stable across ruff versions; the
+# codebase is maintained to flake8 E/F defaults, not to import sorting (I).
+select = ["E4", "E7", "E9", "F"]
+
 [tool.black]
 line-length = 100
 target-version = ["py310"]
