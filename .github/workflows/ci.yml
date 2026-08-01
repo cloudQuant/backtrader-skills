@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install distribution with dev extra
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Ruff
+        run: ruff check .
+      - name: Black
+        run: black --check .
+      - name: Catalog snapshot check
+        run: python scripts/build_catalog.py --check
+      - name: Distribution manifest check
+        run: |
+          python -c "from pathlib import Path; from backtrader_skills.distribution import verify_distribution_manifest; print(verify_distribution_manifest(Path('.')))"
+      - name: pytest
+        run: python -m pytest tests -q
+        # Tests that need the backtrader source package (execution, doctor,
+        # acceptance) auto-skip when it is absent. Run the full suite locally
+        # with the backtrader fork checked out as a sibling, or with
+        # BT_BACKTRADER_DIR pointing at the backtrader package directory.
