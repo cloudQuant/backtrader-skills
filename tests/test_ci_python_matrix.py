@@ -5,6 +5,7 @@ import re
 from .conftest import PRODUCT_ROOT
 
 WORKFLOW = PRODUCT_ROOT / ".github" / "workflows" / "ci.yml"
+PYPROJECT = PRODUCT_ROOT / "pyproject.toml"
 
 
 def job_block(workflow: str, name: str) -> str:
@@ -30,3 +31,15 @@ def test_ci_enforces_the_published_python_support_matrix() -> None:
     assert "python-version: ${{ matrix.python-version }}" in supported
     assert 'python -m pip install -e ".[test]"' in supported
     assert supported.count("python -m pytest tests -q") == 1
+
+
+def test_ci_extras_declare_the_no_isolation_build_backend() -> None:
+    pyproject = PYPROJECT.read_text(encoding="utf-8")
+
+    test_extra = re.search(r"^test = \[(?P<dependencies>[^\]]+)\]$", pyproject, re.MULTILINE)
+    dev_extra = re.search(r"^dev = \[(?P<dependencies>[^\]]+)\]$", pyproject, re.MULTILINE)
+
+    assert test_extra is not None
+    assert dev_extra is not None
+    assert '"setuptools>=68"' in test_extra.group("dependencies")
+    assert '"setuptools>=68"' in dev_extra.group("dependencies")
