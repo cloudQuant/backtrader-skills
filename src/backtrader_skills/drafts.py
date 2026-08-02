@@ -184,15 +184,50 @@ class DraftManager:
 
     def apply(self, draft_id: str, token_id: str) -> dict[str, Any]:
         root, manifest = self.get(draft_id)
+        report = self._load_verified_validation_report(root, manifest)
+        bindings = self._write_bindings(manifest, report)
+        with self.tokens.claim(token_id, "render_write", bindings) as claim:
+            return self._apply_claimed(draft_id, root, manifest, claim)
+
+    @staticmethod
+    def _load_verified_validation_report(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         report_path = root / "validation-report.json"
         if not report_path.is_file():
             raise ContractError("draft must be validated before apply")
         report = load_json(report_path)
-        if not report["summary"]["passed"]:
+        if not isinstance(report, dict):
+            raise IntegrityError("validation report must be a JSON object")
+        expected_hash = report.get("validation_hash")
+        hash_payload = dict(report)
+        hash_payload.pop("validation_hash", None)
+        if not isinstance(expected_hash, str) or expected_hash != canonical_hash(hash_payload):
+            raise IntegrityError("validation report hash is invalid")
+        expected_identity = {
+            "draft_id": manifest["draft_id"],
+            "artifact_hash": manifest["artifact_hash"],
+            "spec_hash": manifest["spec_hash"],
+            "dataset_id": manifest["dataset_id"],
+        }
+        if report.get("schema_version") != "validation-report-v1" or any(
+            report.get(field) != value for field, value in expected_identity.items()
+        ):
+            raise IntegrityError("validation report does not match draft manifest")
+        summary = report.get("summary")
+        if (
+            report.get("status") != "passed"
+            or not isinstance(summary, dict)
+            or summary.get("passed") is not True
+        ):
             raise ContractError("draft validation failed")
-        bindings = self._write_bindings(manifest, report)
-        self.tokens.verify(token_id, "render_write", bindings)
+        return report
 
+    def _apply_claimed(
+        self,
+        draft_id: str,
+        root: Path,
+        manifest: dict[str, Any],
+        claim: Any,
+    ) -> dict[str, Any]:
         transaction_id = f"apply_{secrets.token_hex(12)}"
         transaction_root = root / "transactions" / transaction_id
         staged_root = transaction_root / "staged"
@@ -265,7 +300,7 @@ class DraftManager:
                 journal_entry["state"] = "committed"
                 committed.append(journal_entry)
                 atomic_write_json(journal_path, journal)
-            self.tokens.consume(token_id, "render_write", bindings)
+            claim.consume()
         except Exception as error:
             rollback_errors = self._rollback_apply(transaction_root, committed)
             journal["state"] = "rollback_failed" if rollback_errors else "rolled_back"

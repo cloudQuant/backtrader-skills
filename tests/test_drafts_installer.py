@@ -44,6 +44,28 @@ def test_draft_requires_separate_approval_and_applies_exact_bytes(tmp_path) -> N
     assert all((target / item["path"]).is_file() for item in result["files"])
 
 
+def test_apply_rejects_tampered_validation_report_before_consuming_token(tmp_path) -> None:
+    target = isolated_target(tmp_path)
+    manager = DraftManager(RuntimePaths(target))
+    spec = default_strategy_spec("single_data_indicator", "python_bundle", "ds_" + "a" * 64)
+    draft = manager.preview(spec)
+    validation = manager.validate(draft["draft_id"])
+    token = validation["approval_token"]
+    report_path = (
+        target / ".backtrader-skills" / "drafts" / draft["draft_id"] / "validation-report.json"
+    )
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["status"] = "failed"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    manager.tokens.approve(token["token_id"])
+    with pytest.raises(IntegrityError, match="validation report hash"):
+        manager.apply(draft["draft_id"], token["token_id"])
+
+    assert manager.tokens.get(token["token_id"])["state"] == "ISSUED"
+    assert all(not (target / entry["path"]).exists() for entry in draft["files"])
+
+
 def test_multi_file_apply_rolls_back_when_second_target_write_fails(tmp_path, monkeypatch) -> None:
     target = isolated_target(tmp_path)
     manager = DraftManager(RuntimePaths(target))

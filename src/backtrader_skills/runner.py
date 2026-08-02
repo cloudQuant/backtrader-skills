@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from .backtrader_provenance import require_cloudquant_backtrader_repository
 from .canonical import (
     atomic_write_json,
     canonical_hash,
@@ -109,6 +110,7 @@ def _environment(target: Path) -> dict[str, Any]:
     version_file = target / "backtrader" / "version.py"
     if not version_file.is_file():
         raise ContractError("target does not contain the expected Backtrader source package")
+    require_cloudquant_backtrader_repository(target)
     entry = Path(__file__).with_name("isolate_entry.py")
     return {
         "python": platform.python_version(),
@@ -239,7 +241,6 @@ class ControlledRunner:
         if canonical_hash(_environment(self.paths.target)) != manifest["environment_hash"]:
             raise IntegrityError("execution environment changed after approval was prepared")
         bindings = self._bindings(manifest)
-        self.tokens.verify(token_id, "run_execution", bindings)
         self.tokens.consume(token_id, "run_execution", bindings)
         modes = {
             mode: self._run_mode(manifest, candidate_path, mode, run_dir)

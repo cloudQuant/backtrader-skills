@@ -10,7 +10,7 @@ from typing import Any, cast
 from .canonical import canonical_hash
 from .errors import ContractError
 from .resources import resource_path
-from .types import EventComparison, MetricComparison
+from .types import EventComparison, MetricComparison, MetricDifference
 
 
 def load_comparison_profile(path: Path | None = None) -> dict[str, Any]:
@@ -85,7 +85,7 @@ def compare_metrics(
         *[{"side": "left", **item} for item in validate_metrics(left, profile)],
         *[{"side": "right", **item} for item in validate_metrics(right, profile)],
     ]
-    differences: list[dict[str, Any]] = []
+    differences: list[MetricDifference] = []
     if not diagnostics:
         for key in profile["integer_metrics"]:
             if left[key] != right[key]:
@@ -130,14 +130,17 @@ def compare_metrics(
                         },
                     }
                 )
-    result = {
+    result: MetricComparison = {
         "profile_version": profile["profile_version"],
         "profile_hash": profile["profile_hash"],
         "diagnostics": diagnostics,
         "differences": differences,
         "passed": not diagnostics and not differences,
+        "comparison_hash": "",
     }
-    result["comparison_hash"] = canonical_hash(result)
+    hash_payload = dict(result)
+    del hash_payload["comparison_hash"]
+    result["comparison_hash"] = canonical_hash(hash_payload)
     return result
 
 
@@ -150,7 +153,7 @@ def compare_events(
     fields = profile["event_fields"]
     normalized_left = [{key: event.get(key) for key in fields} for event in left]
     normalized_right = [{key: event.get(key) for key in fields} for event in right]
-    differences = []
+    differences: list[dict[str, Any]] = []
     length = max(len(normalized_left), len(normalized_right))
     for index in range(length):
         left_event = normalized_left[index] if index < len(normalized_left) else None
@@ -159,13 +162,16 @@ def compare_events(
             differences.append({"index": index, "left": left_event, "right": right_event})
             if len(differences) >= 50:
                 break
-    result = {
+    result: EventComparison = {
         "fields": fields,
         "left_count": len(normalized_left),
         "right_count": len(normalized_right),
         "differences": differences,
         "truncated": len(differences) == 50,
         "passed": not differences,
+        "comparison_hash": "",
     }
-    result["comparison_hash"] = canonical_hash(result)
+    hash_payload = dict(result)
+    del hash_payload["comparison_hash"]
+    result["comparison_hash"] = canonical_hash(hash_payload)
     return result

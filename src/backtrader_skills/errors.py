@@ -29,9 +29,29 @@ class ApprovalError(SkillsError):
     code = "APPROVAL_REQUIRED"
 
 
+class ApprovalLockTimeout(ApprovalError):
+    code = "APPROVAL_LOCK_TIMEOUT"
+
+
 class ConflictError(SkillsError):
     code = "TARGET_CONFLICT"
 
 
 class ExecutionError(SkillsError):
     code = "EXECUTION_FAILED"
+
+
+class SourceCheckoutNotFound(SkillsError):
+    code = "SOURCE_CHECKOUT_NOT_FOUND"
+
+
+class BacktraderSourceMismatch(ContractError):
+    """The selected Backtrader source cannot be proven to be the required fork."""
+
+    code = "BACKTRADER_SOURCE_MISMATCH"
+
+
+class BacktraderInstallFailed(SkillsError):
+    """Installing the required cloudQuant Backtrader fork failed."""
+
+    code = "BACKTRADER_INSTALL_FAILED"

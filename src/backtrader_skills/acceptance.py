@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from .backtrader_provenance import require_cloudquant_backtrader_repository
 from .canonical import atomic_write_json, canonical_hash, file_hash
 from .data import ADAPTERS, DataRegistry
 from .doctor import run_doctor
@@ -377,6 +378,7 @@ def run_acceptance(
 ) -> dict[str, Any]:
     if matrix != "all":
         raise ValueError("P0 acceptance currently exposes the complete 'all' matrix only")
+    require_cloudquant_backtrader_repository(repository)
     with tempfile.TemporaryDirectory(prefix="backtrader-skills-acceptance-") as temp:
         workspace = Path(temp)
         target = workspace / "target"
@@ -494,7 +496,7 @@ def run_acceptance(
             "passed": observed_repairs == expected_repairs
             and all(item["passed"] for item in repairs),
         }
-        doctor = run_doctor(repository)
+        doctor = run_doctor(repository, check_runtime=False)
         sibling_checks = {
             "mcp_absent": not (repository / "backtrader-mcp").exists()
             and not (repository / "backtrader_mcp").exists(),
@@ -531,6 +533,149 @@ def run_acceptance(
             "cells": cells,
             "passed": passed,
         }
+
+
+def _install_clean_wheel(wheel: Path, install_root: Path, working: Path) -> None:
+    install = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--ignore-installed",
+            "--target",
+            str(install_root),
+            str(wheel),
+        ],
+        cwd=working,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if install.returncode != 0:
+        raise ExecutionError(
+            "clean acceptance wheel install failed",
+            details={"stderr": install.stderr[-4000:]},
+        )
+
+
+def _probe_clean_runtime_dependencies(install_root: Path) -> dict[str, dict[str, Any]]:
+    probe_code = (
+        "import json,sys;"
+        "from importlib.metadata import version;"
+        "from pathlib import Path;"
+        "install_root=Path(sys.argv[1]).resolve();"
+        "sys.path.insert(0,str(install_root));"
+        "import backtrader_skills.state;"
+        "import filelock;"
+        "module_path=Path(filelock.__file__).resolve();"
+        "origin_verified=module_path.is_relative_to(install_root);"
+        "relative_path=module_path.relative_to(install_root).as_posix() if origin_verified else '';"
+        "print(json.dumps({'filelock':{'version':version('filelock'),"
+        "'module_path':relative_path,"
+        "'origin_verified':origin_verified}},allow_nan=False))"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", probe_code, str(install_root)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ExecutionError(
+            "clean runtime dependency probe failed",
+            details={"stderr": completed.stderr[-4000:]},
+        )
+    lines = [line for line in completed.stdout.splitlines() if line.strip()]
+    if not lines:
+        raise IntegrityError("clean runtime dependency probe returned no JSON")
+    try:
+        dependencies = json.loads(lines[-1])
+        filelock = dependencies["filelock"]
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        raise IntegrityError(
+            f"clean runtime dependency probe returned invalid JSON: {error}"
+        ) from error
+    if (
+        not isinstance(filelock, dict)
+        or not isinstance(filelock.get("version"), str)
+        or not isinstance(filelock.get("module_path"), str)
+        or filelock.get("origin_verified") is not True
+    ):
+        raise IntegrityError("clean runtime dependency probe did not verify filelock origin")
+    return {"filelock": filelock}
+
+
+def _smoke_clean_installer(install_root: Path, target: Path) -> dict[str, Any]:
+    """Prove the clean-installed package can locate and install its shipped skills."""
+
+    smoke_code = (
+        "import json,sys;"
+        "from pathlib import Path;"
+        "install_root=Path(sys.argv[1]).resolve();"
+        "target=Path(sys.argv[2]).resolve();"
+        "target.mkdir(parents=True,exist_ok=True);"
+        "sys.path.insert(0,str(install_root));"
+        "from backtrader_skills.installer import SKILL_NAMES,SkillInstaller;"
+        "from backtrader_skills.runtime import RuntimePaths;"
+        "installer=SkillInstaller(RuntimePaths(target));"
+        "preview=installer.preview_install('codex');"
+        "token=preview['approval_token']['token_id'];"
+        "installer.tokens.approve(token);"
+        "result=installer.apply_install(preview['plan']['plan_id'],token);"
+        "skills=sorted(skill for skill in SKILL_NAMES if "
+        "(target/'.agents'/'skills'/skill/'SKILL.md').is_file());"
+        "print(json.dumps({'passed':skills==sorted(SKILL_NAMES),'host':'codex',"
+        "'installed_skills':skills,'installed_file_count':len(result['files'])},allow_nan=False))"
+    )
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-S",
+            "-c",
+            smoke_code,
+            str(install_root),
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ExecutionError(
+            "clean installed installer smoke failed",
+            details={"stderr": completed.stderr[-4000:]},
+        )
+    lines = [line for line in completed.stdout.splitlines() if line.strip()]
+    if not lines:
+        raise IntegrityError("clean installed installer smoke returned no JSON")
+    try:
+        smoke = json.loads(lines[-1])
+    except json.JSONDecodeError as error:
+        raise IntegrityError("clean installed installer smoke returned invalid JSON") from error
+    expected_skills = [
+        "backtrader-strategy-author",
+        "backtrader-strategy-review",
+        "backtrader-strategy-test",
+    ]
+    installed_file_count = smoke.get("installed_file_count") if isinstance(smoke, dict) else None
+    if (
+        not isinstance(smoke, dict)
+        or smoke.get("passed") is not True
+        or smoke.get("host") != "codex"
+        or smoke.get("installed_skills") != expected_skills
+        or not isinstance(installed_file_count, int)
+        or installed_file_count < 1
+    ):
+        raise IntegrityError("clean installed installer smoke did not verify canonical skills")
+    return {
+        "passed": True,
+        "host": "codex",
+        "installed_skills": expected_skills,
+        "installed_file_count": installed_file_count,
+    }
 
 
 def run_clean_wheel_acceptance(
@@ -586,27 +731,9 @@ def run_clean_wheel_acceptance(
         }
         if any(marker in name.lower() for name in wheel_names for marker in forbidden_markers):
             raise IntegrityError("wheel unexpectedly contains a sibling product")
-        install = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--no-deps",
-                "--target",
-                str(install_root),
-                str(wheel),
-            ],
-            cwd=working,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if install.returncode != 0:
-            raise ExecutionError(
-                "clean acceptance wheel install failed",
-                details={"stderr": install.stderr[-4000:]},
-            )
+        _install_clean_wheel(wheel, install_root, working)
+        runtime_dependencies = _probe_clean_runtime_dependencies(install_root)
+        installer_smoke = _smoke_clean_installer(install_root, clean_root / "installer-target")
         installed_names = [
             path.relative_to(install_root).as_posix().lower() for path in install_root.rglob("*")
         ]
@@ -660,6 +787,8 @@ def run_clean_wheel_acceptance(
             "source_checkout_on_sys_path": False,
             "installed_origin_verified": True,
             "sibling_packages_absent": True,
+            "runtime_dependencies": runtime_dependencies,
+            "installer_smoke": installer_smoke,
         }
         result["passed"] = bool(result["passed"])
         return result

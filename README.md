@@ -11,6 +11,23 @@ It does not import or start sibling MCP or Agent products. The bundled catalog s
 metadata for 1,152 functional strategy tests and 1,035 three-file packages, with 1,032 mapped IDs,
 so normal operation does not require either source corpus.
 
+## Required Backtrader source
+
+The only Backtrader source accepted for strategy execution and acceptance is
+[`cloudQuant/backtrader`](https://github.com/cloudQuant/backtrader). A matching package name or
+version number is not sufficient: the tool verifies the Git remote, or PEP 610 installation
+metadata that leads back to that remote.
+
+Run `doctor` before using the product. If the active Python environment has no `backtrader`,
+doctor installs `git+https://github.com/cloudQuant/backtrader.git` with that same interpreter and
+verifies it again. If a `backtrader` package already exists but cannot be proven to be the
+cloudQuant fork, doctor returns a `BACKTRADER_SOURCE_WARNING`; it does not silently replace the
+existing package. The `run` command uses the same preflight and writes that warning to stderr.
+
+Every `--target` and source-checkout `--repository` is also required to be a cloudQuant Git
+checkout. A valid-looking package from another fork is rejected with
+`BACKTRADER_SOURCE_MISMATCH`.
+
 ## Install the runtime
 
 From the `backtrader-skills` checkout, activate any supported Python 3.10–3.13 environment and
@@ -239,27 +256,49 @@ fail.
   return.
 - Host-client UI discovery cannot be emulated without each client binary. Product tests verify all
   four native paths, canonical skill metadata, forwarders, conflicts, and protected uninstall.
-- Concurrent CLI invocations against the same `--target` are unsupported. State files use atomic
-  writes but no cross-process lock; run one command at a time per target.
+- General concurrent CLI invocations against the same `--target` remain unsupported. State files
+  outside approval tokens are not globally serialized; run one command at a time per target.
+- A single approval token is protected across local processes: render apply and install or uninstall
+  hold a per-token lock through their protected writes, while run atomically consumes its token before
+  launching child processes. At most one operation can consume the same token. This does not serialize
+  unrelated tokens, data-root registration, draft previews, or arbitrary target writes.
 
 ## Verify the distribution
 
 Run these commands from the `backtrader-skills` checkout with the intended environment activated.
 Repository maintainers use the Anaconda base environment required by the repository's `AGENTS.md`,
-but that machine-specific executable path is not part of the public commands:
+but that machine-specific executable path is not part of the public commands.
+
+The source-checkout helpers automatically locate a Backtrader repository only when this product is
+either nested below that repository or next to a sibling directory named `backtrader`. They validate
+that the selected root contains `backtrader/version.py` and that its Git remote is
+`cloudQuant/backtrader`. They return `SOURCE_CHECKOUT_NOT_FOUND` when neither layout exists and
+`BACKTRADER_SOURCE_MISMATCH` when a candidate is another fork, rather than guessing or continuing
+with an incompatible implementation.
+
+After changing a distribution-included file, rebuild the tracked manifest once with
+`python scripts/build_manifest.py`. For routine, read-only validation use
+`python scripts/build_manifest.py --check`; both `--check` and `--help` leave
+`manifest.json` unchanged.
 
 ```bash
+# Automatic discovery for a nested or sibling Backtrader checkout
 python scripts/doctor.py
+python scripts/build_manifest.py --check
 python scripts/build_catalog.py --check
 python -m pytest tests -q
 python scripts/run_acceptance.py \
   --matrix all --require-no-mcp --require-no-agent
+
+# A Backtrader checkout in any other location
+python scripts/doctor.py --target /path/to/backtrader
+python scripts/run_acceptance.py --repository /path/to/backtrader \
+  --matrix all --require-no-mcp --require-no-agent
 ```
 
-`doctor`, the acceptance matrix, and the execution tests run strategies through the Backtrader
-source package. They pass when `backtrader-skills` is checked out inside the Backtrader fork
-repository or the fork sits as a sibling directory; the test suite also honors `BT_BACKTRADER_DIR`
-pointing at the `backtrader` package directory, and skips those tests when the package is absent.
+`doctor`, the acceptance matrix, and the execution tests run strategies through the cloudQuant
+Backtrader source package. The test suite also honors `BT_BACKTRADER_DIR` pointing at that
+checkout's `backtrader` package directory, and skips source-backed tests when the package is absent.
 
 The acceptance command builds a wheel, installs it into an isolated directory, exposes only the
 Backtrader source package to a clean fixture repository, and runs the full 7×2 matrix from that
@@ -290,6 +329,21 @@ published file hash and compatibility range.
 它不导入或启动 sibling 的 MCP 或 Agent 产品。内置的 catalog 快照含 1,152 个功能策略
 测试和 1,035 个三文件包的元数据，以及 1,032 个已映射 ID，因此正常使用不需要任一源语
 料。
+
+## 必需的 Backtrader 来源
+
+策略执行和验收只接受
+[`cloudQuant/backtrader`](https://github.com/cloudQuant/backtrader)。仅凭同名包或版本号不能
+证明兼容性：工具会校验 Git remote，或校验可回溯至该 remote 的 PEP 610 安装元数据。
+
+使用产品前先运行 `doctor`。若当前 Python 环境没有 `backtrader`，doctor 会使用同一解释器
+安装 `git+https://github.com/cloudQuant/backtrader.git`，随后再次验证来源。若已存在
+`backtrader` 但无法证明来自 cloudQuant fork，doctor 会返回
+`BACKTRADER_SOURCE_WARNING`；它不会静默替换已有包。`run` 命令使用同一预检，并将该警告
+写入 stderr。
+
+每个 `--target` 和源码检出 `--repository` 也必须是 cloudQuant Git 检出。来自其他 fork 的
+目录即使包含看似有效的包，也会以 `BACKTRADER_SOURCE_MISMATCH` 拒绝。
 
 ## 安装运行时
 
@@ -506,25 +560,45 @@ candidate、dataset、source-data 和环境哈希，消费一次单独的执行�
   基线仍是显式发布工作流，而非推断出的预期收益。
 - 宿主客户端 UI 发现无法在缺少各客户端二进制的情况下模拟。产品测试验证全部四条原生路
   径、规范 skill 元数据、转发器、冲突和受保护卸载。
-- 不支持对同一 `--target` 的并发 CLI 调用。状态文件使用原子写入但无跨进程锁；每个 target
-  一次只运行一条命令。
+- 对同一 `--target` 的一般并发 CLI 调用仍不受支持。审批令牌以外的状态文件没有全局
+  串行化；每个 target 一次只运行一条命令。
+- 同一审批 token 在本地跨进程间受保护：render apply、install 和 uninstall 在受保护写入期间
+  持有 per-token 锁；run 会在启动子进程前原子消费 token。同一 token 最多只能被一个操作消费。
+  这不串行化无关 token、数据 root 登记、草稿 preview 或任意 target 写入。
 
 ## 验证分发
 
 在 `backtrader-skills` 检出目录下激活目标环境后运行这些命令。仓库维护者使用仓库
-`AGENTS.md` 要求的 Anaconda base 环境，但该机器特定的可执行路径不属于公开命令：
+`AGENTS.md` 要求的 Anaconda base 环境，但该机器特定的可执行路径不属于公开命令。
+
+源码检出辅助脚本只会在两种布局下自动定位 Backtrader 仓库：本产品位于该仓库内，或本产品
+与名为 `backtrader` 的仓库目录同级。它会校验目标根目录含有
+`backtrader/version.py`，且 Git remote 为 `cloudQuant/backtrader`；两种布局都不满足时返回
+结构化 `SOURCE_CHECKOUT_NOT_FOUND` 错误，候选目录属于其他 fork 时返回
+`BACKTRADER_SOURCE_MISMATCH`，不会猜测其他目录或继续使用不兼容实现。
+
+修改被分发的文件后，先用 `python scripts/build_manifest.py` 重建一次受跟踪的清单。
+日常只读验证使用 `python scripts/build_manifest.py --check`；`--check` 和
+`--help` 都不会修改 `manifest.json`。
 
 ```bash
+# 产品嵌套在 Backtrader 仓库中，或两个仓库同级时自动发现
 python scripts/doctor.py
+python scripts/build_manifest.py --check
 python scripts/build_catalog.py --check
 python -m pytest tests -q
 python scripts/run_acceptance.py \
   --matrix all --require-no-mcp --require-no-agent
+
+# Backtrader 位于其他位置时显式指定其仓库根目录
+python scripts/doctor.py --target /path/to/backtrader
+python scripts/run_acceptance.py --repository /path/to/backtrader \
+  --matrix all --require-no-mcp --require-no-agent
 ```
 
-`doctor`、验收矩阵和执行测试都要通过 Backtrader 源码包来运行策略。当 `backtrader-skills`
-检出在 Backtrader fork 仓库内、或 fork 作为同级目录存在时它们即可通过；测试套件也支持用
-`BT_BACKTRADER_DIR` 指向 `backtrader` 包目录，并在缺少该包时自动跳过这些测试。
+`doctor`、验收矩阵和执行测试都要通过 cloudQuant Backtrader 源码包来运行策略。测试套件也
+支持用 `BT_BACKTRADER_DIR` 指向该 checkout 的 `backtrader` 包目录，并在缺少该包时自动跳过
+这些测试。
 
 验收命令构建 wheel，安装到隔离目录，只把 Backtrader 源码包暴露给一个干净 fixture 仓
 库，并从该已安装分发运行完整 7×2 矩阵，源码检出不在 `sys.path` 上。七个 archetype 使

@@ -7,7 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .backtrader_provenance import (
+    ensure_cloudquant_backtrader,
+    require_cloudquant_backtrader_repository,
+)
 from .catalog import EXPECTED_COUNTS, load_snapshot
+from .errors import BacktraderSourceMismatch
 from .installer import SKILL_NAMES, distribution_root
 from .resources import resource_path, resource_root
 
@@ -23,8 +28,37 @@ CONTRACT_FILES = (
 FORBIDDEN_SIBLING_IMPORTS = {"backtrader_mcp", "backtrader_agent"}
 
 
-def run_doctor(target: Path) -> dict[str, Any]:
+def _runtime_provenance_check(check_runtime: bool) -> dict[str, Any]:
+    if not check_runtime:
+        return {
+            "check": "runtime-backtrader-provenance",
+            "passed": True,
+            "severity": "info",
+            "code": "BACKTRADER_RUNTIME_CHECK_SKIPPED",
+            "message": "runtime package check is skipped for isolated acceptance",
+        }
+    runtime = ensure_cloudquant_backtrader()
+    state = runtime.get("state")
+    check: dict[str, Any] = {
+        "check": "runtime-backtrader-provenance",
+        "passed": state in {"verified", "installed"},
+        "severity": (
+            "warning"
+            if state == "warning"
+            else "info" if state in {"verified", "installed"} else "error"
+        ),
+        "code": runtime.get("code"),
+        "message": runtime.get("message"),
+    }
+    for key in ("module_origin", "evidence", "installation_attempted", "stderr_summary"):
+        if key in runtime:
+            check[key] = runtime[key]
+    return check
+
+
+def run_doctor(target: Path, *, check_runtime: bool = True) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
+    checks.append(_runtime_provenance_check(check_runtime))
     resources = resource_root()
     for name in CONTRACT_FILES:
         path = resource_path("contracts", name)
@@ -81,12 +115,25 @@ def run_doctor(target: Path) -> dict[str, Any]:
             "observed": sorted(set(sibling_imports)),
         }
     )
-    checks.append(
-        {
-            "check": "target-backtrader-source",
-            "passed": (target / "backtrader" / "version.py").is_file(),
-        }
-    )
+    try:
+        repository = require_cloudquant_backtrader_repository(target)
+    except BacktraderSourceMismatch as error:
+        checks.append(
+            {
+                "check": "target-backtrader-source",
+                "passed": False,
+                "code": error.code,
+                "message": str(error),
+            }
+        )
+    else:
+        checks.append(
+            {
+                "check": "target-backtrader-source",
+                "passed": True,
+                "repository": str(repository),
+            }
+        )
     return {
         "schema_version": "doctor-result-v1",
         "resource_root": str(resources),

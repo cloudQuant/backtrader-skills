@@ -85,6 +85,8 @@ def test_no_sibling_product_imports_and_doctor(tmp_path) -> None:
                 imported.add((node.module or "").split(".", 1)[0])
         assert not imported & forbidden
     assert verify_distribution_manifest(PRODUCT_ROOT)["verified"]
+    distribution = json.loads((PRODUCT_ROOT / "manifest.json").read_text(encoding="utf-8"))
+    assert distribution["backtrader"] == "https://github.com/cloudQuant/backtrader.git"
     if backtrader_package_dir() is None:
         pytest.skip("backtrader source package not found; set BT_BACKTRADER_DIR")
     assert run_doctor(isolated_target(tmp_path))["passed"]
@@ -111,6 +113,9 @@ def test_wheel_contains_contracts_policy_catalog_and_all_skills(tmp_path) -> Non
     wheel = next(output.glob("*.whl"))
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
+        metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
+        metadata = archive.read(metadata_name).decode("utf-8")
+    assert "Requires-Dist: filelock" in metadata
     for contract in CONTRACT_FILES:
         assert any(name.endswith(f"resources/contracts/{contract}") for name in names)
     assert any(name.endswith("resources/policies/comparison-profile-v1.json") for name in names)

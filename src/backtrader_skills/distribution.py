@@ -52,7 +52,7 @@ def build_distribution_manifest(root: Path) -> dict[str, Any]:
         "product": "backtrader-skills",
         "version": "0.1.0",
         "python": ">=3.10,<3.14",
-        "backtrader": ">=1.3.0,<2",
+        "backtrader": "https://github.com/cloudQuant/backtrader.git",
         "hosts": ["claude", "codex", "opencode", "openclaw"],
         "canonical_skills": [
             "backtrader-strategy-author",
