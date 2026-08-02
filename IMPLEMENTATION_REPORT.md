@@ -29,6 +29,10 @@
 - Fixed active-environment `python -I` child execution for runonce and runnext; under the required
   Anaconda base invocation this resolves to that environment's interpreter, and the controller
   never imports candidate code.
+- Backtrader provenance is constrained to `cloudQuant/backtrader`: doctor verifies the active
+  interpreter without importing the package, installs the cloudQuant Git source only when the
+  module is missing, warns rather than replaces an existing unverifiable package, and execution,
+  source helpers, and acceptance reject targets from other forks.
 - The 11 standard metrics, explicit units/nullability, frozen comparison tolerances, normalized
   event comparison, JSON/Markdown reports, and typed-IR repair/re-render.
 - Manifest-driven preview/apply and protected uninstall for Claude Code, Codex, OpenCode, and
@@ -52,7 +56,8 @@ Commands use `/Users/yunjinqi/opt/anaconda3/bin/conda run -n base`.
 
 | Gate | Result |
 | --- | --- |
-| Product pytest suite | 25 passed |
+| cloudQuant Backtrader provenance | URL, Git checkout, missing-install, existing-package warning, target rejection, doctor output, and run warning are covered; current doctor verifies the local cloudQuant checkout |
+| Iteration 17 product pytest suite | 25 passed (historical baseline) |
 | Black (source and tests) | Pass |
 | Ruff | All checks passed |
 | Catalog snapshot count/hash check | Pass |
@@ -67,9 +72,12 @@ Commands use `/Users/yunjinqi/opt/anaconda3/bin/conda run -n base`.
 | Clean fixture with no sibling MCP/Agent import | Pass |
 
 The acceptance evidence records per-cell data provenance, mode hashes, comparison hashes, repair
-diagnostics, and the built-wheel hash. It is included in the distribution manifest and packaged
-wheel. Repository maintainers ran the commands through the Anaconda `base` environment, while the
-public installation and usage commands remain environment-agnostic.
+diagnostics, built-wheel data, and clean-install runtime dependency provenance. It is included in
+the distribution manifest and packaged wheel. The Iteration 17 count above is historical context;
+the current exact release result is the refreshed
+`evidence/acceptance-7x2.json`, generated through `scripts/run_acceptance.py` during release
+acceptance. Repository maintainers run these commands through the Anaconda `base` environment,
+while public installation and usage commands remain environment-agnostic.
 
 The repository-wide `make test-fast` result recorded before this focused Skills acceptance change
 was `2,474 passed, 1 skipped`. It is historical integration evidence, not silently presented as a

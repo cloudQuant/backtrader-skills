@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  lint-and-test:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,11 +22,30 @@ jobs:
         run: ruff check .
       - name: Black
         run: black --check .
+      - name: Mypy
+        run: python -m mypy src/backtrader_skills
       - name: Catalog snapshot check
         run: python scripts/build_catalog.py --check
       - name: Distribution manifest check
+        run: python scripts/build_manifest.py --check
+
+  test-supported-python:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install distribution with test extra
         run: |
-          python -c "from pathlib import Path; from backtrader_skills.distribution import verify_distribution_manifest; print(verify_distribution_manifest(Path('.')))"
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
       - name: pytest
         run: python -m pytest tests -q
         # Tests that need the backtrader source package (execution, doctor,

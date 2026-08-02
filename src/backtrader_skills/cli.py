@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .backtrader_provenance import ensure_cloudquant_backtrader
 from .canonical import load_json
 from .catalog import build_snapshot, load_snapshot, search_snapshot
 from .compare import compare_metrics
 from .data import DataRegistry
 from .doctor import run_doctor
 from .drafts import DraftManager
-from .errors import ContractError, SkillsError
+from .errors import BacktraderInstallFailed, ContractError, SkillsError
 from .installer import SkillInstaller
 from .ir import ARCHETYPES, OUTPUT_PROFILES, default_strategy_spec, validate_strategy_spec
 from .repair import preview_repair, preview_spec_repair
@@ -44,6 +46,22 @@ def _expected_hashes(items: list[str]) -> dict[str, str]:
         path, digest = item.split("=", maxsplit=1)
         result[path] = digest
     return result
+
+
+def _ensure_run_runtime_backtrader() -> None:
+    """Install a missing runtime dependency or make an existing mismatch visible."""
+
+    status = ensure_cloudquant_backtrader()
+    state = status.get("state")
+    if state == "warning":
+        warnings.warn(str(status["message"]), RuntimeWarning, stacklevel=3)
+        return
+    if state in {"verified", "installed"}:
+        return
+    raise BacktraderInstallFailed(
+        str(status.get("message", "failed to install cloudQuant/backtrader")),
+        details={key: status[key] for key in ("code", "stderr_summary") if key in status},
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -211,6 +229,7 @@ def dispatch(args: argparse.Namespace) -> Any:
     if args.command == "review":
         return validate_python(args.file.resolve(), generated_only=not args.allow_third_party)
     if args.command == "run":
+        _ensure_run_runtime_backtrader()
         runner = ControlledRunner(paths)
         if args.run_command == "prepare":
             return runner.prepare(

@@ -107,7 +107,10 @@ class SkillInstaller:
             "plan_hash": plan["plan_hash"],
             "operation": "install",
         }
-        self.tokens.verify(token_id, "install_write", bindings)
+        with self.tokens.claim(token_id, "install_write", bindings) as claim:
+            return self._apply_install_claimed(plan, claim)
+
+    def _apply_install_claimed(self, plan: dict[str, Any], claim: Any) -> dict[str, Any]:
         if plan["conflicts"]:
             raise ConflictError("installation is create-only and the preview contains conflicts")
         source_root = distribution_root()
@@ -127,7 +130,6 @@ class SkillInstaller:
                     "bytes": entry["bytes"],
                 }
             )
-        self.tokens.consume(token_id, "install_write", bindings)
         install_manifest = {
             "schema_version": "skill-install-manifest-v1",
             "host": plan["host"],
@@ -139,6 +141,7 @@ class SkillInstaller:
         install_manifest["manifest_hash"] = canonical_hash(install_manifest)
         destination = self.paths.installs / f"installed-{plan['host']}.json"
         atomic_write_json(destination, install_manifest)
+        claim.consume()
         return install_manifest
 
     def preview_uninstall(self, host: str) -> dict[str, Any]:
@@ -195,7 +198,10 @@ class SkillInstaller:
             "plan_hash": plan["plan_hash"],
             "operation": "uninstall",
         }
-        self.tokens.verify(token_id, "uninstall_write", bindings)
+        with self.tokens.claim(token_id, "uninstall_write", bindings) as claim:
+            return self._apply_uninstall_claimed(plan, claim)
+
+    def _apply_uninstall_claimed(self, plan: dict[str, Any], claim: Any) -> dict[str, Any]:
         removed = []
         preserved = []
         for entry in plan["files"]:
@@ -210,7 +216,6 @@ class SkillInstaller:
                 removed.append(entry["path"])
             elif entry["status"] == "preserve_modified":
                 preserved.append(entry["path"])
-        self.tokens.consume(token_id, "uninstall_write", bindings)
         result = {
             "schema_version": "skill-uninstall-result-v1",
             "host": plan["host"],
@@ -219,6 +224,7 @@ class SkillInstaller:
             "completed_at": utc_now(),
         }
         atomic_write_json(self.paths.installs / f"uninstalled-{plan['host']}.json", result)
+        claim.consume()
         return result
 
     def _load_plan(self, plan_id: str, schema_version: str) -> dict[str, Any]:
