@@ -8,7 +8,7 @@
 | G-02 | Manifest check | `python scripts/build_manifest.py --check` | PASS |
 | G-03 | Catalog check | `python scripts/build_catalog.py --check` | PASS |
 | G-04 | Tests (execution path) | `python -m pytest tests -q` with `BT_BACKTRADER_DIR=/Users/yunjinqi/Documents/new_projects/backtrader/backtrader` | PASS |
-| G-05 | Coverage (≥ 80) | `python -m pytest tests -q --cov=src/backtrader_skills --cov-report=term-missing --cov-fail-under=80` (same `BT_BACKTRADER_DIR`) | PASS |
+| G-05 | Coverage (≥ 80; except the two `python -I` child modules) | `python -m pytest tests -q --cov=src/backtrader_skills --cov-report=term-missing --cov-fail-under=80` (same `BT_BACKTRADER_DIR`) | PASS |
 | G-06 | Mypy | `python -m mypy src/backtrader_skills` | PASS |
 | G-07 | Ruff | `ruff check .` | PASS |
 | G-08 | Black | `black --check .` | FAIL |
@@ -58,7 +58,9 @@ skills (backtrader-strategy-author/review/test) now ship complete reference cont
 catalogs, worked examples, failure playbooks, and pipeline handoffs, drift-locked to runtime facts
 by tests. CI gains a master-only full-acceptance workflow that checks out the cloudQuant backtrader
 fork and enforces an 80% coverage gate over `src/backtrader_skills`, with the full 7×2 acceptance
-matrix run on master. A golden-prompt skill eval suite (seven archetype prompts plus adversarial and
+matrix run on master. Relative to the plan's Task 3 file list, `.github/workflows/ci.yml` needed no
+change: the master-only workflow landed as the new `.github/workflows/acceptance.yml` instead.
+A golden-prompt skill eval suite (seven archetype prompts plus adversarial and
 cross-skill prompts) with a mechanical scorer and host runbook makes agent quality measurable.
 Repo hygiene (CLAUDE.md, AGENTS.md, CHANGELOG, roadmap) lands with the version bump to 0.2.0.
 

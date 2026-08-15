@@ -311,8 +311,9 @@ checkout's `backtrader` package directory, and skips source-backed tests when th
 Continuous integration enforces this on every push to `master`: a dedicated acceptance job checks
 out the cloudQuant Backtrader fork, runs the full suite with the source package present (execution,
 doctor, and acceptance tests included), enforces at least 80% coverage over
-`src/backtrader_skills`, and then runs the complete 7×2 acceptance matrix. Pull requests keep the
-lighter quality and supported-Python jobs. Emulating each host client binary and the
+`src/backtrader_skills` (except the two `python -I` child modules, `child_runner.py` and
+`isolate_entry.py`, which the coverage config omits), and then runs the complete 7×2 acceptance
+matrix. Pull requests keep the lighter quality and supported-Python jobs. Emulating each host client binary and the
 human-approved master/dev financial baseline remain local release steps.
 
 The acceptance command builds a wheel, installs it into an isolated directory, exposes only the
@@ -624,8 +625,9 @@ python scripts/run_acceptance.py --repository /path/to/backtrader \
 
 持续集成在每次 push 到 `master` 时强制执行上述验证：专用 acceptance 任务检出 cloudQuant
 Backtrader fork，在源码包存在的情况下运行完整测试套件（包含执行、doctor 和 acceptance 测试），
-要求 `src/backtrader_skills` 覆盖率至少 80%，随后运行完整 7×2 验收矩阵。Pull request 保留较轻
-量的 quality 与受支持 Python 任务。模拟各宿主客户端二进制和人工批准的 master/dev 财务基线仍属
+要求 `src/backtrader_skills` 覆盖率至少 80%（不含两个 `python -I` 子进程模块
+`child_runner.py` 和 `isolate_entry.py`，coverage 配置已将其排除），随后运行完整 7×2 验收矩阵。
+Pull request 保留较轻量的 quality 与受支持 Python 任务。模拟各宿主客户端二进制和人工批准的 master/dev 财务基线仍属
 于本地发布步骤。
 
 验收命令构建 wheel，安装到隔离目录，只把 Backtrader 源码包暴露给一个干净 fixture 仓

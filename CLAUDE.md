@@ -67,8 +67,8 @@ the fork's `backtrader` package directory and auto-skip when the source is absen
 
 - Work is organized in iterations. Plans live in `docs/superpowers/plans/` (agent working
   files under `.superpowers/sdd/`); per-iteration evidence lives in
-  `docs/iterations/iteration-<n>-<name>/` as `requirements.md`, `design.md`, and
-  `acceptance.md`.
+  `docs/iterations/iteration-<n>-<name>/` with a required `acceptance.md`; `requirements.md`
+  and `design.md` are optional per iteration.
 - Each iteration follows: plan → TDD (write failing tests first, run them RED) →
   implement to GREEN → review → record acceptance evidence (exact commands and results,
   no fabricated numbers) under `docs/iterations/`.
@@ -78,7 +78,8 @@ the fork's `backtrader` package directory and auto-skip when the source is absen
 - Progressive disclosure: `SKILL.md` files stay at most 60 lines; each reference file at
   most 300 lines.
 - Quality gates: `ruff check .`, `black --check .`, `python -m mypy src/backtrader_skills`,
-  and at least 80% coverage over `src/backtrader_skills` (enforced by CI on master).
+  and at least 80% coverage over `src/backtrader_skills` except the two `python -I` child
+  modules (`child_runner.py`, `isolate_entry.py`) (enforced by CI on master).
 
 ## Security notes
 

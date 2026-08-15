@@ -74,6 +74,9 @@ subprocess exactly as the skills do.
 - Errors are structured JSON (code plus message); the scorer never emits tracebacks. Exit
   codes: 0 all mechanical checks passed, 1 a mechanical verdict failed or errored, 2 scorer
   input error.
+- For adversarial prompts 08/09 and the repair loop (10), a scorer exit of 1 whose score sheet
+  carries the expected diagnostic codes is the pass — evaluate against the prompt's Pass
+  criteria, not the exit code alone.
 
 Score sheet keys: `eval` metadata (target, artifact sha256, dataset ID), `review` verdict plus
 `diagnostic_codes`, `run_prepare` verdict plus `integrity`, a `manual_rows` placeholder, and an

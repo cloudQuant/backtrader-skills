@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import json
 import re
 
-from backtrader_skills.ir import ARCHETYPES, DATA_LINES, EXPRESSION_KINDS, OPERATORS, OUTPUT_PROFILES
+from backtrader_skills.ir import (
+    ARCHETYPES,
+    DATA_LINES,
+    EXPRESSION_KINDS,
+    OPERATORS,
+    OUTPUT_PROFILES,
+)
 
 from .conftest import PRODUCT_ROOT
 
@@ -14,6 +21,10 @@ AUTHORING_CONTRACT = (
 REVIEW_RULES = (
     PRODUCT_ROOT / "skills" / "backtrader-strategy-review" / "references" / "review-rules.md"
 )
+METRIC_CONTRACT = (
+    PRODUCT_ROOT / "skills" / "backtrader-strategy-test" / "references" / "metric-contract.md"
+)
+COMPARISON_PROFILE = PRODUCT_ROOT / "resources" / "policies" / "comparison-profile-v1.json"
 VALIDATION_SOURCE = PRODUCT_ROOT / "src" / "backtrader_skills" / "validation.py"
 
 # Diagnostic code string literals. The [A-Z] class requires at least one letter
@@ -110,6 +121,7 @@ _SECTION_HEADING = re.compile(r"^## ", re.MULTILINE)
 _BACKTICK_SPAN = re.compile(r"`([^`]+)`")
 _SKILL_NAME_TOKEN = re.compile(r"backtrader-strategy-[a-z]+")
 _RUBRIC_ROW = re.compile(r"^\|.*\|$", re.MULTILINE)
+_METRIC_ROW = re.compile(r"^\| `([a-z_]+)` \| .* \| (yes|no) \|$", re.MULTILINE)
 
 
 def _prompt_sections(text: str) -> dict[str, str]:
@@ -143,6 +155,26 @@ def test_review_rules_cover_every_diagnostic_code() -> None:
     rules = REVIEW_RULES.read_text(encoding="utf-8")
     missing = sorted({code for code in codes if code not in rules})
     assert not missing, f"review-rules.md does not cover: {missing}"
+
+
+def test_metric_contract_nullability_matches_comparison_profile() -> None:
+    # The metric-contract table must agree with the comparison policy shipped in
+    # resources/policies: the same metric universe, and "yes" exactly on the
+    # policy's nullable_metrics.
+    profile = json.loads(COMPARISON_PROFILE.read_text(encoding="utf-8"))
+    contract = METRIC_CONTRACT.read_text(encoding="utf-8")
+
+    rows = {metric: nullable for metric, nullable in _METRIC_ROW.findall(contract)}
+    policy_metrics = set(profile["integer_metrics"]) | set(profile["float_metrics"])
+    assert (
+        set(rows) == policy_metrics
+    ), f"metric-contract metric set drift: {sorted(set(rows) ^ policy_metrics)}"
+
+    nullable = {metric for metric, value in rows.items() if value == "yes"}
+    expected_nullable = set(profile["nullable_metrics"])
+    assert (
+        nullable == expected_nullable
+    ), f"metric-contract nullability drift: {sorted(nullable ^ expected_nullable)}"
 
 
 def _linked_markdown_files(skill: str) -> list[str]:
@@ -196,17 +228,17 @@ def test_eval_suite_reference_contract() -> None:
         for span in _BACKTICK_SPAN.findall(text):
             for token in span.split():
                 if _PROFILE_TOKEN.fullmatch(token):
-                    assert token in OUTPUT_PROFILES, (
-                        f"{name} references unknown output profile: `{token}`"
-                    )
+                    assert (
+                        token in OUTPUT_PROFILES
+                    ), f"{name} references unknown output profile: `{token}`"
         for match in _ROLE_REFERENCE.finditer(text):
             token = match.group(1)
             assert token in _FEED_ROLES, f"{name} references unknown feed role: `{token}`"
         for match in _LINE_REFERENCE.finditer(text):
             token = match.group(1) or match.group(2)
-            assert token in DATA_LINES | _EVAL_CUSTOM_LINES, (
-                f"{name} references unknown data or custom line: `{token}`"
-            )
+            assert (
+                token in DATA_LINES | _EVAL_CUSTOM_LINES
+            ), f"{name} references unknown data or custom line: `{token}`"
 
         rubric_rows = len(_RUBRIC_ROW.findall(sections["Rubric"])) - 2
         assert 3 <= rubric_rows <= 5, f"{name} Rubric has {rubric_rows} scored rows (want 3-5)"
@@ -218,11 +250,11 @@ def test_eval_suite_reference_contract() -> None:
                 verbs = tuple(token for token in span.split() if token in _CLI_VERBS)
                 if not verbs:
                     continue
-                assert verbs in _ALLOWED_CLI_PATHS, (
-                    f"{name} references unsupported CLI command words: `{span}`"
-                )
+                assert (
+                    verbs in _ALLOWED_CLI_PATHS
+                ), f"{name} references unsupported CLI command words: `{span}`"
 
-    assert (PRODUCT_ROOT / "scripts" / "record_eval.py").is_file(), (
-        "scripts/record_eval.py is missing from the repo"
-    )
+    assert (
+        PRODUCT_ROOT / "scripts" / "record_eval.py"
+    ).is_file(), "scripts/record_eval.py is missing from the repo"
     assert (PRODUCT_ROOT / "evals" / "README.md").is_file(), "evals/README.md is missing"

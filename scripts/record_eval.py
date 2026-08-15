@@ -189,8 +189,26 @@ def main(argv: list[str] | None = None) -> int:
         exit_code = 2
     else:
         exit_code = 0 if sheet["overall"]["status"] == "passed" else 1
-    arguments.out.parent.mkdir(parents=True, exist_ok=True)
-    arguments.out.write_text(json.dumps(sheet, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    try:
+        arguments.out.parent.mkdir(parents=True, exist_ok=True)
+        arguments.out.write_text(
+            json.dumps(sheet, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    except (OSError, ValueError) as error:
+        print(
+            json.dumps(
+                {
+                    "score_sheet_version": SHEET_VERSION,
+                    "eval": _eval_metadata(arguments, None),
+                    "status": "error",
+                    "code": "SCORER_OUTPUT_ERROR",
+                    "message": str(error),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
     print(f"score sheet written: {arguments.out}")
     return exit_code
 
