@@ -1,6 +1,6 @@
 ---
 name: backtrader-strategy-review
-description: Review Backtrader StrategySpec and generated Python artifacts without importing candidate code. Use for fork-construction checks, AST/security review, look-ahead detection, import and path policy validation, stable diagnostics, or deterministic repair by re-rendering approved typed IR.
+description: Review Backtrader StrategySpec and generated Python artifacts without importing candidate code. Use for backtest review: fork-construction checks, AST/security review, look-ahead detection, import and path policy validation, stable diagnostics, or deterministic repair by re-rendering approved typed IR.
 ---
 
 # Backtrader Strategy Review
@@ -26,4 +26,15 @@ execute a candidate during review.
 6. Repeat validation and require a fresh write approval before applying a repaired draft.
 
 Use `backtrader-skills --target /path/to/backtrader ...` from the environment selected during setup.
-Read [review-rules.md](references/review-rules.md) for diagnostic categories and trust boundaries.
+
+## Pipeline
+
+Author → review → test. Review statically validates authored drafts and applied artifacts, and
+routes failing candidates back to the author loop: repair returns to the typed spec, creates a new
+draft, and requires fresh write and run approvals before retrying.
+
+## References
+
+- [review-rules.md](references/review-rules.md) — diagnostic catalog, severity, remediation, and trust boundaries.
+- [worked-example.md](references/worked-example.md) — injected-fault candidate and the expected ValidationReport excerpt.
+- [failure-playbook.md](references/failure-playbook.md) — token, diagnostic, parity, and source-error recovery.

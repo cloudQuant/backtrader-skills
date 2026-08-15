@@ -1,6 +1,6 @@
 ---
 name: backtrader-strategy-test
-description: Run approved Backtrader Skills candidates in fixed isolated child processes and compare runonce with runnext. Use for smoke backtests, parity checks, the 11 standard metrics, event-sequence comparison, reproducible JSON and Markdown reports, or investigating a failed generated strategy run.
+description: Run approved Backtrader Skills candidates in fixed isolated child processes and compare runonce with runnext. Use for backtesting: smoke backtests, parity checks, the 11 standard metrics, event-sequence comparison, reproducible JSON and Markdown reports, or investigating a failed generated strategy run.
 ---
 
 # Backtrader Strategy Test
@@ -24,4 +24,14 @@ The fixed runner invokes the distribution's active Python interpreter in two sep
 children. Candidate code is never imported by the controlling process. This is process isolation
 with AST, path, import, hash, and offline-data gates; it is not a complete operating-system sandbox.
 
-Read [metric-contract.md](references/metric-contract.md) for all 11 units and nullable rules.
+## Pipeline
+
+Author → review → test. Test is the final gate: it prepares and executes only approved, applied
+artifacts. A failed validation or parity run repairs back through the author/review loop: revise
+the typed spec, create a new draft, and obtain fresh write and run approvals before retrying.
+
+## References
+
+- [metric-contract.md](references/metric-contract.md) — the 11 metric units and nullable rules.
+- [worked-example.md](references/worked-example.md) — prepare → approve → execute and the expected report fields.
+- [failure-playbook.md](references/failure-playbook.md) — token, parity, and source-error recovery.
