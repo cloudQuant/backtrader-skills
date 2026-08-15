@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from backtrader_skills.ir import ARCHETYPES, EXPRESSION_KINDS, OPERATORS, OUTPUT_PROFILES
+from backtrader_skills.ir import ARCHETYPES, DATA_LINES, EXPRESSION_KINDS, OPERATORS, OUTPUT_PROFILES
 
 from .conftest import PRODUCT_ROOT
 
@@ -43,6 +43,28 @@ EVAL_PROMPT_ARCHETYPES: dict[str, str | None] = {
 }
 
 EVAL_PROMPT_SECTIONS = ("Preconditions", "Prompt", "Pass criteria", "Rubric")
+
+# Output profile each archetype prompt must declare (backtick-delimited).
+EXPECTED_EVAL_PROMPT_PROFILES: dict[str, str] = {
+    "01-single-data-indicator.md": "python_bundle",
+    "02-multi-indicator-system.md": "single_test",
+    "03-multi-asset-allocation.md": "python_bundle",
+    "04-multi-timeframe.md": "python_bundle",
+    "05-pairs-spread.md": "python_bundle",
+    "06-order-risk.md": "single_test",
+    "07-precomputed-ml.md": "python_bundle",
+}
+
+# Feed roles mirror the inline role set in backtrader_skills.ir.validate_strategy_spec;
+# _EVAL_CUSTOM_LINES is the only custom line the eval suite references.
+_FEED_ROLES = {"execution", "signal", "benchmark", "hedge", "cash_proxy"}
+_EVAL_CUSTOM_LINES = {"signal"}
+
+_PROFILE_TOKEN = re.compile(r"[a-z][a-z0-9_]*(?:_bundle|_test)")
+_ROLE_REFERENCE = re.compile(r"(?:role\s+|feed\s+\d+\s+\(\s*)`([^`]+)`")
+_LINE_REFERENCE = re.compile(
+    r"(?:custom\s+)?line\s+`([^`]+)`|`([^`]+)`\s+(?:as\s+a\s+)?custom\s+line"
+)
 
 _ADVERSARIAL_PROMPTS = {
     "08-adversarial-lookahead.md",
@@ -168,6 +190,23 @@ def test_eval_suite_reference_contract() -> None:
         assert any(value in prompt for value in ARCHETYPES), f"{name} Prompt names no archetype"
         if archetype is not None:
             assert archetype in text, f"{name} does not contain its archetype: {archetype}"
+        if name in EXPECTED_EVAL_PROMPT_PROFILES:
+            profile = EXPECTED_EVAL_PROMPT_PROFILES[name]
+            assert f"`{profile}`" in text, f"{name} does not declare output profile `{profile}`"
+        for span in _BACKTICK_SPAN.findall(text):
+            for token in span.split():
+                if _PROFILE_TOKEN.fullmatch(token):
+                    assert token in OUTPUT_PROFILES, (
+                        f"{name} references unknown output profile: `{token}`"
+                    )
+        for match in _ROLE_REFERENCE.finditer(text):
+            token = match.group(1)
+            assert token in _FEED_ROLES, f"{name} references unknown feed role: `{token}`"
+        for match in _LINE_REFERENCE.finditer(text):
+            token = match.group(1) or match.group(2)
+            assert token in DATA_LINES | _EVAL_CUSTOM_LINES, (
+                f"{name} references unknown data or custom line: `{token}`"
+            )
 
         rubric_rows = len(_RUBRIC_ROW.findall(sections["Rubric"])) - 2
         assert 3 <= rubric_rows <= 5, f"{name} Rubric has {rubric_rows} scored rows (want 3-5)"
