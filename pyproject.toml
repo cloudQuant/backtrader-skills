@@ -21,7 +21,8 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest>=7", "pytest-cov>=4", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40"]
-dev = ["pytest>=7", "pytest-cov>=4", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40", "ruff>=0.4", "black>=24", "mypy>=1.10"]
+docs = ["mkdocs-material>=9", "mkdocs-static-i18n>=1.0"]
+dev = ["pytest>=7", "pytest-cov>=4", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40", "ruff>=0.4", "black>=24", "mypy>=1.10", "mkdocs-material>=9", "mkdocs-static-i18n>=1.0"]
 
 [project.scripts]
 backtrader-skills = "backtrader_skills.cli:main"

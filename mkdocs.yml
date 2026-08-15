@@ -1,0 +1,23 @@
+site_name: backtrader-skills
+strict: true
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Skills: skills.md
+  - Evaluations: evals.md
+  - Changelog: changelog.md
+  - Roadmap: roadmap.md
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          name: English
+          default: true
+        - locale: zh
+          name: 中文
