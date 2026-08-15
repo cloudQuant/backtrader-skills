@@ -11,10 +11,12 @@ It does not import or start sibling MCP or Agent products. The bundled catalog s
 metadata for 1,152 functional strategy tests and 1,035 three-file packages, with 1,032 mapped IDs,
 so normal operation does not require either source corpus.
 
-Documentation is published at <https://cloudquant.github.io/backtrader-skills/> (GitHub Pages)
-and <https://backtrader-skills.readthedocs.io/> (ReadTheDocs). Both URLs follow the standard
-`<owner>.github.io/<repo>` and `<repo>.readthedocs.io` patterns; the ReadTheDocs site goes live
-after the project is imported on readthedocs.org.
+Online documentation is published at <https://cloudquant.github.io/backtrader-skills/>
+(GitHub Pages, live once Pages is enabled — see
+docs/iterations/iteration-30-bilingual-docs-site/acceptance.md) and at
+<https://backtrader-skills.readthedocs.io/> (ReadTheDocs, live once the project is imported on
+readthedocs.org). Both URLs follow the standard `<owner>.github.io/<repo>` and
+`<repo>.readthedocs.io` patterns.
 
 ## For maintainers
 
@@ -372,10 +374,11 @@ published file hash and compatibility range.
 测试和 1,035 个三文件包的元数据，以及 1,032 个已映射 ID，因此正常使用不需要任一源语
 料。
 
-文档站点发布在 <https://cloudquant.github.io/backtrader-skills/>（GitHub Pages）和
-<https://backtrader-skills.readthedocs.io/>（ReadTheDocs）。两个 URL 都遵循标准的
-`<owner>.github.io/<repo>` 与 `<repo>.readthedocs.io` 模式；ReadTheDocs 站点需在
-readthedocs.org 上导入本项目后才会正式上线。
+在线文档发布在 <https://cloudquant.github.io/backtrader-skills/>（GitHub Pages，启用
+Pages 后才会上线——见 docs/iterations/iteration-30-bilingual-docs-site/acceptance.md）和
+<https://backtrader-skills.readthedocs.io/>（ReadTheDocs，在 readthedocs.org 上导入本项目
+后才会上线）。两个 URL 都遵循标准的 `<owner>.github.io/<repo>` 与
+`<repo>.readthedocs.io` 模式。
 
 ## 面向维护者
 

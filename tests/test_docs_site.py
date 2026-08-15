@@ -11,6 +11,8 @@ DOCS_WORKFLOW = PRODUCT_ROOT / ".github" / "workflows" / "docs.yml"
 CI_WORKFLOW = PRODUCT_ROOT / ".github" / "workflows" / "ci.yml"
 PYPROJECT = PRODUCT_ROOT / "pyproject.toml"
 DOCS_DIR = PRODUCT_ROOT / "docs"
+CHANGELOG = PRODUCT_ROOT / "CHANGELOG.md"
+SITE_CHANGELOGS = (DOCS_DIR / "changelog.en.md", DOCS_DIR / "changelog.zh.md")
 
 # Nav pages of the published site. The i18n plugin resolves each base name to
 # its per-language file (<page>.<locale>.md), so every page must ship in both
@@ -39,6 +41,26 @@ def yaml_block(text: str, marker: str) -> str | None:
             break
         body.append(line)
     return "\n".join(body)
+
+
+VERSION_HEADER = re.compile(r"^## \[.*\]")
+
+
+def version_headers(text: str) -> list[str]:
+    """Version headers (``## [x.y.z]`` lines) of a changelog file."""
+    return [line for line in text.splitlines() if VERSION_HEADER.match(line)]
+
+
+def unreleased_body(text: str) -> str:
+    """Whitespace-normalized body text of the [Unreleased] section."""
+    lines = text.splitlines()
+    body = []
+    for line in lines[lines.index("## [Unreleased]") + 1 :]:
+        if VERSION_HEADER.match(line):
+            break
+        if line.strip():
+            body.append(line.strip())
+    return " ".join(body)
 
 
 def test_mkdocs_configures_a_strict_bilingual_material_site() -> None:
@@ -124,3 +146,36 @@ def test_pyproject_docs_extra_declares_the_site_toolchain_and_feeds_dev() -> Non
     for dependency in ('"mkdocs-material>=9"', '"mkdocs-static-i18n>=1.0"'):
         assert dependency in docs_extra.group("dependencies"), f"docs extra misses {dependency}"
         assert dependency in dev_extra.group("dependencies"), f"dev extra misses {dependency}"
+    # mkdocs-material is not compatible with MkDocs 2.x, so the docs extra must
+    # keep the site on the 1.x line until the Material theme supports 2.x.
+    assert '"mkdocs>=1.5,<2"' in docs_extra.group(
+        "dependencies"
+    ), "docs extra misses the mkdocs 1.x upper bound"
+
+
+def test_changelog_version_headers_are_mirrored_in_the_site_changelogs() -> None:
+    changelog = CHANGELOG.read_text(encoding="utf-8")
+    headers = version_headers(changelog)
+    assert headers, "CHANGELOG.md has no version headers"
+
+    for path in SITE_CHANGELOGS:
+        site_headers = version_headers(path.read_text(encoding="utf-8"))
+        missing = [header for header in headers if header not in site_headers]
+        assert not missing, f"{path.name} is missing changelog version headers: {missing}"
+
+
+def test_changelog_unreleased_body_is_mirrored_in_the_english_site_changelog() -> None:
+    changelog = CHANGELOG.read_text(encoding="utf-8")
+    body = unreleased_body(changelog)
+    assert body, "CHANGELOG.md [Unreleased] body is empty"
+
+    # The site changelogs lag behind CHANGELOG.md by design (they are refreshed
+    # per iteration), so the lock only requires the source body to appear,
+    # whitespace aside, in the published English copy rather than requiring
+    # byte-identical files.
+    english = SITE_CHANGELOGS[0].read_text(encoding="utf-8")
+    normalized = " ".join(english.split())
+    assert body in normalized, (
+        "docs/changelog.en.md does not carry the CHANGELOG.md [Unreleased] body; "
+        "copy the current entry into the site changelog"
+    )

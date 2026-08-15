@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 新增
+
+- 双语 MkDocs 文档站点（EN/中文）发布到 GitHub Pages 和 ReadTheDocs；README 新增 eval 部
+  分和文档站点链接；站点构建排除开发者产物。
+
 ## [0.2.0] - 2026-08-15
 
 ### 新增
@@ -41,5 +46,5 @@
   保留较轻量的 quality 与受支持 Python 任务。
 - Evals：golden-prompt skill eval 套件（七个 archetype prompt 加对抗性与跨 skill
   prompt）与机械评分器（`scripts/record_eval.py`）和 runbook。
-- 仓库卫生：新增 `CLAUDE.md`、`AGENTS.md`、`CHANGELOG.md` 和 `docs/roadmap.md`；README
+- 仓库卫生：新增 `CLAUDE.md`、`AGENTS.md`、`CHANGELOG.md` 和 `docs/roadmap.zh.md`；README
   现在链接维护者文档并声明 SemVer 政策。

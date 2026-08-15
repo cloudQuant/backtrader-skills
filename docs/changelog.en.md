@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bilingual MkDocs documentation site (EN/中文) published to GitHub Pages and ReadTheDocs; eval
+  section and docs links added to README; developer artifacts excluded from the site build.
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
@@ -49,5 +54,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   supported-Python jobs.
 - Evals: a golden-prompt skill eval suite (seven archetype prompts plus adversarial and
   cross-skill prompts) with a mechanical scorer (`scripts/record_eval.py`) and a runbook.
-- Repo hygiene: added `CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`, and `docs/roadmap.md`;
+- Repo hygiene: added `CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`, and `docs/roadmap.en.md`;
   the README now links the maintainer docs and states the SemVer policy.
