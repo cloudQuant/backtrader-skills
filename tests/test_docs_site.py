@@ -102,6 +102,7 @@ def test_docs_workflow_publishes_the_site_on_master_push_only() -> None:
     assert "peaceiris/actions-gh-pages@v4" in workflow
     assert "github_token: ${{ secrets.GITHUB_TOKEN }}" in workflow
     assert "publish_dir: ./site" in workflow
+    assert "contents: write" in workflow
 
 
 def test_ci_quality_job_gates_the_docs_build() -> None:

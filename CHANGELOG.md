@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bilingual MkDocs documentation site (EN/中文) published to GitHub Pages and ReadTheDocs; eval
+  section and docs links added to README; developer artifacts excluded from the site build.
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
