@@ -48,10 +48,11 @@ diagnostic requires a StrategySpec change and is repaired with
 
 A review returns a `validation-report-v1` object with `validation_id` (`val_` plus 24 hex
 characters of the artifact hash), `artifact_hash`, `dataset_id`, `status` (`passed` only when zero
-errors), `diagnostics`, and `layers`. Layer verdicts: `python_ast`, `fork_api`, and `security`
-fail on any error in the respective prefix; `specification`, `import_collection`, `smoke`,
-`runonce_runnext`, `target_test`, and `baseline` are `not_applicable`/`pending` outside their
-own gates. The report ends in a canonical `validation_hash`.
+errors), `diagnostics`, and `layers`. Layer verdicts: `python_ast` fails on any error; `fork_api`
+and `security` fail on errors with their respective prefixes; `specification`, `import_collection`,
+`smoke`, `runonce_runnext`, `target_test`, `baseline`, and `artifact_integrity` are
+`not_applicable`/`pending` outside their own gates. The report ends in a canonical
+`validation_hash`.
 
 ## Coverage boundaries
 
