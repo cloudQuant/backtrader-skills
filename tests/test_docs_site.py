@@ -51,6 +51,7 @@ def test_mkdocs_configures_a_strict_bilingual_material_site() -> None:
     plugin = yaml_block(config, "  - i18n:")
     assert plugin is not None, "mkdocs.yml has no i18n plugin block"
     assert "docs_structure: suffix" in plugin
+    assert "fallback_to_default: false" in plugin
     assert "locale: en" in plugin
     assert "locale: zh" in plugin
     assert "default: true" in plugin
