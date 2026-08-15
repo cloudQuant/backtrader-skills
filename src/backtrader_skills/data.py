@@ -129,17 +129,17 @@ class DataRegistry:
         return path
 
     def inspect(self, feed_spec: dict[str, Any], *, sample_limit: int = 20) -> dict[str, Any]:
-        _validate_feed_spec(feed_spec)
-        source = feed_spec["source"]
+        normalized = _validate_feed_spec(feed_spec)
+        source = normalized["source"]
         source_path = resolve_inside(
             self.root_path(source["root_id"]), source["relative_path"], must_exist=True
         )
         if not source_path.is_file():
             raise PathPolicyError("dataset source must be a regular file")
-        parsed = _parse_feed(source_path, feed_spec, sample_limit=sample_limit)
+        parsed = _parse_feed(source_path, normalized, sample_limit=sample_limit)
         return {
             "schema_version": "dataset-inspection-v1",
-            "feed": feed_spec["name"],
+            "feed": normalized["name"],
             "source": {
                 "root_id": source["root_id"],
                 "relative_path": source["relative_path"],

@@ -42,7 +42,7 @@ def _expected_hashes(items: list[str]) -> dict[str, str]:
     result = {}
     for item in items:
         if "=" not in item:
-            raise argparse.ArgumentTypeError("--expected-hash must use PATH=SHA256")
+            raise ContractError("--expected-hash must use PATH=SHA256")
         path, digest = item.split("=", maxsplit=1)
         result[path] = digest
     return result

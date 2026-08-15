@@ -1,0 +1,31 @@
+name: acceptance
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  full-acceptance:
+    name: Full acceptance (Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the cloudQuant Backtrader fork
+        uses: actions/checkout@v4
+        with:
+          repository: cloudQuant/backtrader
+          path: backtrader-fork
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install distribution with dev extra
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Full test suite with coverage gate
+        env:
+          BT_BACKTRADER_DIR: backtrader-fork/backtrader
+        run: python -m pytest --cov=src/backtrader_skills --cov-report=term-missing --cov-fail-under=80
+      - name: Release acceptance matrix
+        run: python scripts/run_acceptance.py --repository backtrader-fork --matrix all --require-no-mcp --require-no-agent
