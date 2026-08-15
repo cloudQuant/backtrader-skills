@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backtrader-skills"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline, auditable strategy authoring, review, and test skills for Backtrader"
 readme = "README.md"
 requires-python = ">=3.10"

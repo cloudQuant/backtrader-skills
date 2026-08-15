@@ -8,6 +8,8 @@ import sys
 
 from .conftest import SOURCE_ROOT
 
+import backtrader_skills  # noqa: E402  (needs SOURCE_ROOT on sys.path from conftest)
+
 
 def test_python_dash_m_entrypoint_runs_the_cli() -> None:
     environment = dict(os.environ)
@@ -20,4 +22,4 @@ def test_python_dash_m_entrypoint_runs_the_cli() -> None:
         env=environment,
     )
     assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == "0.1.0"
+    assert completed.stdout.strip() == backtrader_skills.__version__

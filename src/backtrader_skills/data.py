@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Iterable, cast
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from . import __version__
 from .canonical import (
     atomic_write_bytes,
     atomic_write_json,
@@ -276,7 +277,7 @@ class DataRegistry:
             "provenance": provenance,
             "extensions": {
                 "backtrader_skills": {
-                    "product_version": "0.1.0",
+                    "product_version": __version__,
                     "created_at": utc_now(),
                     "license": normalized_spec["license"],
                     "sensitivity": normalized_spec["sensitivity"],

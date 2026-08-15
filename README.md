@@ -11,6 +11,14 @@ It does not import or start sibling MCP or Agent products. The bundled catalog s
 metadata for 1,152 functional strategy tests and 1,035 three-file packages, with 1,032 mapped IDs,
 so normal operation does not require either source corpus.
 
+## For maintainers
+
+This repository follows Semantic Versioning; the current release is 0.2.0. The change
+history is in [CHANGELOG.md](CHANGELOG.md) and the P1 backlog is in
+[docs/roadmap.md](docs/roadmap.md). Agents working on this repository must read
+[CLAUDE.md](CLAUDE.md) (non-Claude hosts: [AGENTS.md](AGENTS.md)), which defines the
+maintainer environment, the verification commands, and the distribution manifest rule.
+
 ## Required Backtrader source
 
 The only Backtrader source accepted for strategy execution and acceptance is
@@ -336,6 +344,13 @@ published file hash and compatibility range.
 它不导入或启动 sibling 的 MCP 或 Agent 产品。内置的 catalog 快照含 1,152 个功能策略
 测试和 1,035 个三文件包的元数据，以及 1,032 个已映射 ID，因此正常使用不需要任一源语
 料。
+
+## 面向维护者
+
+本仓库遵循语义化版本（SemVer）；当前发布版本为 0.2.0。变更历史见
+[CHANGELOG.md](CHANGELOG.md)，P1 backlog 见 [docs/roadmap.md](docs/roadmap.md)。在本仓库
+工作的 Agent 必须阅读 [CLAUDE.md](CLAUDE.md)（非 Claude 宿主：[AGENTS.md](AGENTS.md)），
+其中定义了维护者环境、验证命令和分发 manifest 规则。
 
 ## 必需的 Backtrader 来源
 
