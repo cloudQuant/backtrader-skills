@@ -1,3 +1,5 @@
+Historical snapshot of the Iteration 17 P0 delivery. See [CHANGELOG.md](CHANGELOG.md) for the current release state.
+
 # Iteration 17 P0 implementation report
 
 ## Delivered

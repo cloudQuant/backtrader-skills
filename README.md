@@ -11,11 +11,16 @@ It does not import or start sibling MCP or Agent products. The bundled catalog s
 metadata for 1,152 functional strategy tests and 1,035 three-file packages, with 1,032 mapped IDs,
 so normal operation does not require either source corpus.
 
+Documentation is published at <https://cloudquant.github.io/backtrader-skills/> (GitHub Pages)
+and <https://backtrader-skills.readthedocs.io/> (ReadTheDocs). Both URLs follow the standard
+`<owner>.github.io/<repo>` and `<repo>.readthedocs.io` patterns; the ReadTheDocs site goes live
+after the project is imported on readthedocs.org.
+
 ## For maintainers
 
 This repository follows Semantic Versioning; the current release is 0.2.0. The change
 history is in [CHANGELOG.md](CHANGELOG.md) and the P1 backlog is in
-[docs/roadmap.md](docs/roadmap.md). Agents working on this repository must read
+[docs/roadmap.en.md](docs/roadmap.en.md). Agents working on this repository must read
 [CLAUDE.md](CLAUDE.md) (non-Claude hosts: [AGENTS.md](AGENTS.md)), which defines the
 maintainer environment, the verification commands, and the distribution manifest rule.
 
@@ -146,6 +151,27 @@ request. This installer does not create or register the agent itself.
 OpenClaw was not installed in the environment used for the current acceptance snapshot. Its layout,
 metadata, forwarders, conflict handling, and protected uninstall are statically tested; live
 discovery must remain unchecked until an installed OpenClaw agent completes the smoke above.
+
+## Evaluate the installed skills
+
+The `evals/` suite measures whether a real host agent can use the three installed skills to
+produce reviewed, runnable strategies, and whether the review gates hold. Ten prompts live in
+`evals/prompts/`: seven golden prompts (one per archetype) plus three adversarial/cross-skill
+probes. The runbook is `evals/README.md`.
+
+Score the artifact a prompt run produced with the shipped mechanical scorer:
+
+```bash
+python scripts/record_eval.py \
+  --target <target> \
+  --artifact <target>/strategies/generated/<archetype>/<artifact_id>_<slug>/strategy.py \
+  --dataset-id 'ds_<64hex>' \
+  --out evals/results/<prompt-file>.json
+```
+
+The scorer invokes the installed CLI for `review` and `run prepare` only. `run execute`
+requires a human-approved token inside the host session, so live LLM runs are manual; the
+runbook's rubric rows cover what the scorer cannot.
 
 ## Register local data
 
@@ -346,10 +372,15 @@ published file hash and compatibility range.
 测试和 1,035 个三文件包的元数据，以及 1,032 个已映射 ID，因此正常使用不需要任一源语
 料。
 
+文档站点发布在 <https://cloudquant.github.io/backtrader-skills/>（GitHub Pages）和
+<https://backtrader-skills.readthedocs.io/>（ReadTheDocs）。两个 URL 都遵循标准的
+`<owner>.github.io/<repo>` 与 `<repo>.readthedocs.io` 模式；ReadTheDocs 站点需在
+readthedocs.org 上导入本项目后才会正式上线。
+
 ## 面向维护者
 
 本仓库遵循语义化版本（SemVer）；当前发布版本为 0.2.0。变更历史见
-[CHANGELOG.md](CHANGELOG.md)，P1 backlog 见 [docs/roadmap.md](docs/roadmap.md)。在本仓库
+[CHANGELOG.md](CHANGELOG.md)，P1 backlog 见 [docs/roadmap.zh.md](docs/roadmap.zh.md)。在本仓库
 工作的 Agent 必须阅读 [CLAUDE.md](CLAUDE.md)（非 Claude 宿主：[AGENTS.md](AGENTS.md)），
 其中定义了维护者环境、验证命令和分发 manifest 规则。
 
@@ -472,6 +503,25 @@ skill/tool trace 和 doctor JSON 结果作为证据。
 
 当前验收快照所用环境未安装 OpenClaw。其布局、元数据、转发器、冲突处理和受保护卸载经
 过静态测试；在已安装的 OpenClaw agent 完成上述 smoke 之前，live 发现保持未检查状态。
+
+## 评估已安装的 skill
+
+`evals/` 套件衡量真实宿主 agent 能否用三个已安装 skill 产出通过审查、可运行的策略，以及
+审查门禁能否挡住对抗性请求。十个 prompt 位于 `evals/prompts/`：七个 golden prompt（每个
+archetype 一个）加三个对抗性 / 跨 skill 探针。运行手册是 `evals/README.md`。
+
+用内置的机械评分器对一次 prompt 运行产出的 artifact 评分：
+
+```bash
+python scripts/record_eval.py \
+  --target <target> \
+  --artifact <target>/strategies/generated/<archetype>/<artifact_id>_<slug>/strategy.py \
+  --dataset-id 'ds_<64hex>' \
+  --out evals/results/<prompt-file>.json
+```
+
+评分器只调用已安装 CLI 的 `review` 和 `run prepare`。`run execute` 需要宿主会话内人工批
+准的 token，因此 live LLM 运行是手动的；评分器无法覆盖的部分由运行手册中的 rubric 行负责。
 
 ## 登记本地数据
 

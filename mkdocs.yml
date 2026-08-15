@@ -1,6 +1,11 @@
 site_name: backtrader-skills
 strict: true
 
+# Developer plan and acceptance artifacts must not be published on the public site.
+exclude_docs: |
+  superpowers/
+  iterations/
+
 theme:
   name: material
 

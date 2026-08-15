@@ -48,6 +48,11 @@ def test_mkdocs_configures_a_strict_bilingual_material_site() -> None:
     assert "strict: true" in config
     assert "name: material" in config
 
+    excluded = yaml_block(config, "exclude_docs: |")
+    assert excluded is not None, "mkdocs.yml has no exclude_docs block"
+    assert "superpowers/" in excluded
+    assert "iterations/" in excluded
+
     plugin = yaml_block(config, "  - i18n:")
     assert plugin is not None, "mkdocs.yml has no i18n plugin block"
     assert "docs_structure: suffix" in plugin
