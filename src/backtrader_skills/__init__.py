@@ -3,4 +3,4 @@
 from .canonical import canonical_bytes, canonical_hash
 
 __all__ = ["canonical_bytes", "canonical_hash"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

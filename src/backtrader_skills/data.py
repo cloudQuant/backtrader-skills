@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Iterable, cast
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from . import __version__
 from .canonical import (
     atomic_write_bytes,
     atomic_write_json,
@@ -129,17 +130,17 @@ class DataRegistry:
         return path
 
     def inspect(self, feed_spec: dict[str, Any], *, sample_limit: int = 20) -> dict[str, Any]:
-        _validate_feed_spec(feed_spec)
-        source = feed_spec["source"]
+        normalized = _validate_feed_spec(feed_spec)
+        source = normalized["source"]
         source_path = resolve_inside(
             self.root_path(source["root_id"]), source["relative_path"], must_exist=True
         )
         if not source_path.is_file():
             raise PathPolicyError("dataset source must be a regular file")
-        parsed = _parse_feed(source_path, feed_spec, sample_limit=sample_limit)
+        parsed = _parse_feed(source_path, normalized, sample_limit=sample_limit)
         return {
             "schema_version": "dataset-inspection-v1",
-            "feed": feed_spec["name"],
+            "feed": normalized["name"],
             "source": {
                 "root_id": source["root_id"],
                 "relative_path": source["relative_path"],
@@ -276,7 +277,7 @@ class DataRegistry:
             "provenance": provenance,
             "extensions": {
                 "backtrader_skills": {
-                    "product_version": "0.1.0",
+                    "product_version": __version__,
                     "created_at": utc_now(),
                     "license": normalized_spec["license"],
                     "sensitivity": normalized_spec["sensitivity"],

@@ -209,6 +209,11 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Eval artifacts: transcripts and score sheets may contain approval tokens;
+# they must never be committed.
+evals/transcripts/
+evals/results/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

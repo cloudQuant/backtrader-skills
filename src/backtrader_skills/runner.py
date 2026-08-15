@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from . import __version__
 from .backtrader_provenance import require_cloudquant_backtrader_repository
 from .canonical import (
     atomic_write_json,
@@ -118,7 +119,7 @@ def _environment(target: Path) -> dict[str, Any]:
         "platform": platform.platform(),
         "backtrader_version_file_hash": file_hash(version_file),
         "child_entry_hash": file_hash(entry),
-        "product_version": "0.1.0",
+        "product_version": __version__,
     }
 
 

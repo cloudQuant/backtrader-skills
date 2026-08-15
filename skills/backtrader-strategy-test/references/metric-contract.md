@@ -10,7 +10,7 @@
 | `trade_num` | trade records | no |
 | `final_value` | account currency | no |
 | `sharpe_ratio` | dimensionless | yes |
-| `annual_return` | ratio | no |
+| `annual_return` | ratio | yes |
 | `max_drawdown` | percent | no |
 | `return_rate` | percent | no |
 

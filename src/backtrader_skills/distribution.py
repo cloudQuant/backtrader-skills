@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .canonical import atomic_write_json, canonical_hash, file_hash, load_json
 from .errors import IntegrityError
 
@@ -50,7 +51,7 @@ def build_distribution_manifest(root: Path) -> dict[str, Any]:
     manifest = {
         "schema_version": "backtrader-skills-distribution-v1",
         "product": "backtrader-skills",
-        "version": "0.1.0",
+        "version": __version__,
         "python": ">=3.10,<3.14",
         "backtrader": "https://github.com/cloudQuant/backtrader.git",
         "hosts": ["claude", "codex", "opencode", "openclaw"],

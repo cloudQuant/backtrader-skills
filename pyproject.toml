@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backtrader-skills"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline, auditable strategy authoring, review, and test skills for Backtrader"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40"]
-dev = ["pytest>=7", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40", "ruff>=0.4", "black>=24", "mypy>=1.10"]
+test = ["pytest>=7", "pytest-cov>=4", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40"]
+dev = ["pytest>=7", "pytest-cov>=4", "jsonschema>=4", "build>=1", "setuptools>=68", "wheel>=0.40", "ruff>=0.4", "black>=24", "mypy>=1.10"]
 
 [project.scripts]
 backtrader-skills = "backtrader_skills.cli:main"
@@ -83,6 +83,21 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src/backtrader_skills"]
+# child_runner and isolate_entry execute exclusively inside ``python -I``
+# child processes: ``-I`` implies ``-E`` and the runner's subprocess
+# environment allow-list (PATH, LANG, LC_ALL, TMPDIR, NO_PROXY, ...) excludes
+# every coverage variable, so COVERAGE_PROCESS_START propagation cannot reach
+# them. Every other module is measured.
+omit = [
+  "src/backtrader_skills/child_runner.py",
+  "src/backtrader_skills/isolate_entry.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
 
 [tool.ruff]
 line-length = 100
