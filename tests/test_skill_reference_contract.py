@@ -28,14 +28,15 @@ _LINK_TARGET = re.compile(r"\]\(([^)]+)\)")
 
 def test_author_contract_enumerates_the_runtime_vocabulary() -> None:
     contract = AUTHORING_CONTRACT.read_text(encoding="utf-8")
-    vocabulary = (
-        *ARCHETYPES,
-        *OUTPUT_PROFILES,
-        *sorted(EXPRESSION_KINDS),
-        *sorted(OPERATORS),
-    )
-    missing = sorted({value for value in vocabulary if value not in contract})
-    assert not missing, f"authoring-contract.md does not name: {missing}"
+    missing = [
+        value
+        for value in (*ARCHETYPES, *OUTPUT_PROFILES, *sorted(EXPRESSION_KINDS))
+        if value not in contract
+    ]
+    # Short operator tokens ("and", "or", "not", ...) match ordinary prose by
+    # coincidence, so they must appear as explicitly backtick-delimited tokens.
+    missing += [value for value in sorted(OPERATORS) if f"`{value}`" not in contract]
+    assert not missing, f"authoring-contract.md does not name: {sorted(missing)}"
 
 
 def test_review_rules_cover_every_diagnostic_code() -> None:
