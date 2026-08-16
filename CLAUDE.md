@@ -80,7 +80,8 @@ the fork's `backtrader` package directory and auto-skip when the source is absen
 - Quality gates: `ruff check .`, `black --check .`, `python -m mypy src/backtrader_skills`,
   at least 80% coverage over `src/backtrader_skills` except the two `python -I` child
   modules (`child_runner.py`, `isolate_entry.py`) (enforced by CI on master), and
-  `mkdocs build --strict` for the published docs site. `tests/test_docs_site.py` is the
+  `python scripts/build_docs.py --strict` for the published docs site (the wrapper injects
+  the host-specific `site_url` the language switcher needs). `tests/test_docs_site.py` is the
   docs wiring contract test: it pins the nav pages, the per-language page files, the
   readthedocs config, the docs workflow, and the `exclude_docs` developer-artifact
   exclusions.

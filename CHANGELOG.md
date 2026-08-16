@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bilingual MkDocs documentation site (EN/中文) published to GitHub Pages and ReadTheDocs; eval
   section and docs links added to README; developer artifacts excluded from the site build.
 
+### Fixed
+
+- Fixed the language-switcher links on GitHub Pages and ReadTheDocs by injecting a
+  host-specific `site_url` at build time (`scripts/build_docs.py`).
+
 ## [0.2.0] - 2026-08-15
 
 ### Added

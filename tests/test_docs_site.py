@@ -99,16 +99,25 @@ def test_every_nav_page_ships_in_both_languages() -> None:
     assert not missing, f"bilingual docs site pages missing: {sorted(missing)}"
 
 
-def test_readthedocs_config_builds_the_mkdocs_site_with_the_docs_extra() -> None:
+def test_readthedocs_config_builds_the_site_via_the_wrapper_with_the_rtd_url() -> None:
     config = READTHEDOCS_CONFIG.read_text(encoding="utf-8")
 
     assert "version: 2" in config
     assert "os: ubuntu-22.04" in config
     assert 'python: "3.11"' in config
-    assert "configuration: mkdocs.yml" in config
-    assert "path: ." in config
-    assert "extra_requirements:" in config
-    assert "- docs" in config
+    assert 'python -m pip install -e ".[docs]"' in config
+
+    commands = yaml_block(config, "  commands:")
+    assert commands is not None, ".readthedocs.yaml has no build.commands block"
+    assert "DOCS_SITE_URL=https://backtrader-skills.readthedocs.io/en/latest/" in commands
+    assert "python scripts/build_docs.py --strict --site-dir $READTHEDOCS_OUTPUT/html" in commands
+
+    # The wrapper hands MkDocs a temporary config, so the legacy ``mkdocs:``
+    # and ``python:`` top-level keys must be gone.
+    assert "configuration: mkdocs.yml" not in config
+    assert "extra_requirements:" not in config
+    assert "\nmkdocs:" not in config
+    assert "\npython:" not in config
 
 
 def test_docs_workflow_publishes_the_site_on_master_push_only() -> None:
@@ -120,7 +129,8 @@ def test_docs_workflow_publishes_the_site_on_master_push_only() -> None:
     assert "pull_request" not in workflow
     assert 'python-version: "3.11"' in workflow
     assert 'python -m pip install -e ".[docs]"' in workflow
-    assert "mkdocs build --strict" in workflow
+    assert "python scripts/build_docs.py --strict" in workflow
+    assert "DOCS_SITE_URL: https://cloudquant.github.io/backtrader-skills/" in workflow
     assert "peaceiris/actions-gh-pages@v4" in workflow
     assert "github_token: ${{ secrets.GITHUB_TOKEN }}" in workflow
     assert "publish_dir: ./site" in workflow
@@ -132,7 +142,9 @@ def test_ci_quality_job_gates_the_docs_build() -> None:
     quality = job_block(workflow, "quality")
 
     assert 'python -m pip install -e ".[dev]"' in quality
-    assert "mkdocs build --strict" in quality
+    assert "python scripts/build_docs.py --strict" in quality
+    assert "DOCS_SITE_URL: https://cloudquant.github.io/backtrader-skills/" in quality
+    assert "mkdocs build" not in quality
 
 
 def test_pyproject_docs_extra_declares_the_site_toolchain_and_feeds_dev() -> None:

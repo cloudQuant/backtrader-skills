@@ -12,6 +12,11 @@
 - 双语 MkDocs 文档站点（EN/中文）发布到 GitHub Pages 和 ReadTheDocs；README 新增 eval 部
   分和文档站点链接；站点构建排除开发者产物。
 
+### 修复
+
+- 修复了 GitHub Pages 和 ReadTheDocs 上的语言切换链接：构建时注入特定于部署主机的
+  `site_url`（`scripts/build_docs.py`）。
+
 ## [0.2.0] - 2026-08-15
 
 ### 新增
