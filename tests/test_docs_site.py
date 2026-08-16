@@ -105,19 +105,25 @@ def test_readthedocs_config_builds_the_site_via_the_wrapper_with_the_rtd_url() -
     assert "version: 2" in config
     assert "os: ubuntu-22.04" in config
     assert 'python: "3.11"' in config
-    assert 'python -m pip install -e ".[docs]"' in config
 
     commands = yaml_block(config, "  commands:")
     assert commands is not None, ".readthedocs.yaml has no build.commands block"
+    # When build.commands is set, RTD does not run its predefined jobs
+    # (install included), so the docs extra must be installed by a command
+    # step itself — inside the commands section, not a build.jobs.install block.
+    assert "python -m pip install --upgrade pip" in commands
+    assert 'python -m pip install -e ".[docs]"' in commands
     assert "DOCS_SITE_URL=https://backtrader-skills.readthedocs.io/en/latest/" in commands
     assert "python scripts/build_docs.py --strict --site-dir $READTHEDOCS_OUTPUT/html" in commands
 
     # The wrapper hands MkDocs a temporary config, so the legacy ``mkdocs:``
-    # and ``python:`` top-level keys must be gone.
+    # and ``python:`` top-level keys must be gone, and no pre-defined job may
+    # carry the install that build.commands never runs.
     assert "configuration: mkdocs.yml" not in config
     assert "extra_requirements:" not in config
     assert "\nmkdocs:" not in config
     assert "\npython:" not in config
+    assert "jobs:" not in config
 
 
 def test_docs_workflow_publishes_the_site_on_master_push_only() -> None:

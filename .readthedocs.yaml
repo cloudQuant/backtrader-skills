@@ -4,9 +4,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  jobs:
-    install:
-      - python -m pip install --upgrade pip
-      - python -m pip install -e ".[docs]"
   commands:
+    - python -m pip install --upgrade pip
+    - python -m pip install -e ".[docs]"
     - DOCS_SITE_URL=https://backtrader-skills.readthedocs.io/en/latest/ python scripts/build_docs.py --strict --site-dir $READTHEDOCS_OUTPUT/html

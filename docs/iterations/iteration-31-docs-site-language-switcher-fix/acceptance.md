@@ -6,8 +6,8 @@
 | --- | --- | --- | --- |
 | G-01 | Tests (execution path) | `BT_BACKTRADER_DIR=/Users/yunjinqi/Documents/new_projects/backtrader/backtrader python -m pytest tests` | PASS |
 | G-02 | Tests (plain) | `python -m pytest tests` | PASS |
-| G-03 | Docs build (strict, Pages env) + alternate-link grep | `DOCS_SITE_URL=https://cloudquant.github.io/backtrader-skills/ python scripts/build_docs.py --strict -d /tmp/iter31-pages-site`; `grep '/backtrader-skills/zh/' site/index.html` | PASS |
-| G-04 | Docs build (strict, RTD env) + alternate-link grep | `DOCS_SITE_URL=https://backtrader-skills.readthedocs.io/en/latest/ python scripts/build_docs.py --strict -d /tmp/iter31-rtd-site`; `grep '/en/latest/zh/' site/index.html` | PASS |
+| G-03 | Docs build (strict, Pages env) + alternate-link grep | `DOCS_SITE_URL=https://cloudquant.github.io/backtrader-skills/ python scripts/build_docs.py --strict -d /tmp/iter31-pages-site`; `grep '/backtrader-skills/zh/' /tmp/iter31-pages-site/index.html` | PASS |
+| G-04 | Docs build (strict, RTD env) + alternate-link grep | `DOCS_SITE_URL=https://backtrader-skills.readthedocs.io/en/latest/ python scripts/build_docs.py --strict -d /tmp/iter31-rtd-site`; `grep '/en/latest/zh/' /tmp/iter31-rtd-site/index.html` | PASS |
 | G-05 | Mypy | `python -m mypy src/backtrader_skills` | PASS |
 | G-06 | Ruff | `ruff check .` | PASS |
 | G-07 | Black | `black --check .` | PASS |
